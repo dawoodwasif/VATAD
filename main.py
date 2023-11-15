@@ -21,43 +21,37 @@ def process_video(dataset_folder, video_folder, annotation_file, m, action_label
     # Load and process annotations
     annotations = load_annotations(annotation_file, video_folder)
     annotations = convert_bbox_format(annotations, frame_shape[1], frame_shape[0])
-
+    
     # Iterate through the background bounding boxes
     for frame_interval, background_bbox in background_bboxes:
         start_frame, end_frame = frame_interval
-        print(start_frame, end_frame, background_bbox)
+        target_frames = list(range(start_frame, end_frame + 1))
 
-        # Check for each annotation within the frame interval
         for index, row in annotations.iterrows():
             frame_number = row['frame']
-            if not (start_frame <= frame_number <= end_frame):
-                continue
+            if not (start_frame <= frame_number <= end_frame):  # Actions outside the interval
+                class_id = row['class_label']
+                person_id = row['person_id']
+                if class_id == action_label:
+                    action_bbox = (row['x1'], row['y1'], row['x2'], row['y2'])
+                    if bbox_within_background(action_bbox, background_bbox):
+                        frame_path = os.path.join(video_path, f'img_{int(frame_number):05d}.jpg')
+                        input_frame = cv2.imread(frame_path)
 
-            class_id = row['class_label']
-            if class_id != action_label:
-                continue
+                        mask = generate_action_mask(sam_model, frame_path, class_id, action_bbox)
 
-            action_bbox = (row['x1'], row['y1'], row['x2'], row['y2'])
-            if not bbox_within_background(action_bbox, background_bbox):
-                continue
-            
+                        if target_frames:
+                            target_frame_number = target_frames.pop(0)
+                            target_frame_path = os.path.join(video_path, f'img_{int(target_frame_number):05d}.jpg')
+                            
+                            
+                            superimposed_frame = superimpose_mask(input_frame, mask, target_frame_path, person_id, annotations, target_frame_number)
 
-            # Load the frame and generate the mask
-            frame_path = os.path.join(video_path, f'img_{int(frame_number):05d}.jpg')
-            mask = generate_action_mask(sam_model, frame_path, class_id, action_bbox)
-            
-            print("Mask Generated")
+                            # Save or display the superimposed frame as needed
+                            # cv2.imwrite(...) or cv2.imshow(...)
 
-            frame = cv2.imread(frame_path)
-            target_frame_path = os.path.join(video_path, f'img_{int(target_frame_number):05d}.jpg')
-            target_frame = cv2.imread(target_frame_path)
-            # Superimpose the mask onto the frame
-            superimposed_frame = superimpose_mask(frame, mask, target_frame_path)
-            
-            # Save or display the superimposed frame 
-            # cv2.imwrite(...) or cv2.imshow(...)
-            cv2.imwrite(os.path.join(video_path,"synthetic_data","frame",f'img_{int(index):05d}.jpg'),superimposed_frame)
-            ## Add a function to update annotation file accordingly
+                            # Add the update annotation function
+                            # ...
 
 
 if __name__ == '__main__':
