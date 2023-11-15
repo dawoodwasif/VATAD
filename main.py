@@ -5,13 +5,13 @@ import torch
 from segment_anything import sam_model_registry
 
 from background import detect_background_bbox, load_annotations, convert_bbox_format, get_frame_shape_from_folder
-from utils import superimpose_mask, bbox_within_background
+from utils import superimpose_mask, bbox_within_background, update_annotation_file
 from mask_extraction import generate_action_mask
 
 
 
 
-def process_video(dataset_folder, video_folder, annotation_file, m, action_label, sam_model):
+def process_video(dataset_folder, video_folder, annotation_file, m, action_label, sam_model,target_frame_number):
     video_path = os.path.join(dataset_folder, video_folder)
     frame_shape = get_frame_shape_from_folder(video_path)
 
@@ -43,10 +43,11 @@ def process_video(dataset_folder, video_folder, annotation_file, m, action_label
                         if target_frames:
                             target_frame_number = target_frames.pop(0)
                             target_frame_path = os.path.join(video_path, f'img_{int(target_frame_number):05d}.jpg')
+                            target_frame = cv2.imread(target_frame_path)
                             
-                            
-                            superimposed_frame = superimpose_mask(input_frame, mask, target_frame_path, person_id, annotations, target_frame_number)
-
+                            superimposed_frame = superimpose_mask(input_frame, mask, target_frame)
+                            cv2.imwrite(os.path.join(video_path,f'img_{int(target_frame_number):05d}.jpg'),superimposed_frame)
+                            update_annotation_file(annotation_file,video_folder,target_frame_number,action_bbox,class_id,person_id)
                             # Save or display the superimposed frame as needed
                             # cv2.imwrite(...) or cv2.imshow(...)
 
