@@ -11,7 +11,7 @@ from mask_extraction import generate_action_mask
 
 
 
-def process_video(dataset_folder, video_folder, annotation_file, m, action_label, sam_model):
+def process_video(dataset_folder, video_folder, annotation_file, m, action_label, sam_model,target_frame_number):
     video_path = os.path.join(dataset_folder, video_folder)
     frame_shape = get_frame_shape_from_folder(video_path)
 
@@ -49,12 +49,14 @@ def process_video(dataset_folder, video_folder, annotation_file, m, action_label
             print("Mask Generated")
 
             frame = cv2.imread(frame_path)
+            target_frame_path = os.path.join(video_path, f'img_{int(target_frame_number):05d}.jpg')
+            target_frame = cv2.imread(target_frame_path)
             # Superimpose the mask onto the frame
-            superimposed_frame = superimpose_mask(frame, mask, action_bbox)
+            superimposed_frame = superimpose_mask(frame, mask, target_frame_path)
             
             # Save or display the superimposed frame 
             # cv2.imwrite(...) or cv2.imshow(...)
-            
+            cv2.imwrite(os.path.join(video_path,"synthetic_data","frame",f'img_{int(index):05d}.jpg'),superimposed_frame)
             ## Add a function to update annotation file accordingly
 
 
