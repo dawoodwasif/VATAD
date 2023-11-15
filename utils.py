@@ -1,5 +1,8 @@
 import csv
 def superimpose_mask(frame, mask,target_frame):
+    """
+    Pastes the mask in target_frame
+    """
     q= frame * mask
     target_frame[mask==True] = q[q>0]
     return target_frame
