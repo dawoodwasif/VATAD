@@ -1,33 +1,33 @@
 # config.yaml
 paths:
-  dataset_path: ''
-  annotation_file: 'sample_annotation.csv'
-  checkpoint_path: 'weights/sam_vit_h_4b8939.pth'
+  dataset_path: 'data'
+  annotation_file: '/home/ubuntu/Furqan/Rumman/VATAD/data/sample_annotaion.csv'
+  checkpoint_path: 'weights/weights/sam_vit_h_4b8939.pth'
 
 model:
-  device: 'auto' # 'auto', 'cuda:0', or 'cpu'
+  device: 'cpu' # 'cuda', or 'cpu'
   model_type: 'vit_h'
 
 processing:
-  video_name: 'activity_nov2022_102526-102556_1'
+  video_name: 'activity_nov2022_132138-132538_1'
   frame_numbers: 10
 
 labels:
+  k: 3
+
   label_weights:
-    - id: 0
-      weight: 0.05
     - id: 1
       weight: 0.1
     - id: 2
       weight: 0.05
     - id: 3
-      weight: 0.2
-    - id: 4
       weight: 0.02
+    - id: 4
+      weight: 0.52
     - id: 5
-      weight: 0.05
+      weight: 0.45
     - id: 6
-      weight: 0.2
+      weight: 0.5
     - id: 7
       weight: 0.1
     - id: 8
@@ -35,9 +35,15 @@ labels:
     - id: 9
       weight: 0.2
     - id: 10
-      weight: 0.1
+      weight: 0.01
     - id: 11
-      weight: 0.35
+      weight: 0.05
     - id: 12
+      weight: 0.02
+    - id: 13
       weight: 0.2
+    - id: 14
+      weight: 0.5
+    - id: 15
+      weight: 0.05
     # Add weights for all 15 labels

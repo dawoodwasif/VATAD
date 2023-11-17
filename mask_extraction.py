@@ -45,9 +45,12 @@ def generate_action_mask(sam, img_path, action_class_id, bbox):
     )
     
     mask = masks[0]
-
     # Convert the mask to a color image (green for True, black for False)
     mask_color = np.zeros((mask.shape[0], mask.shape[1]), dtype='uint8')  # Initialize a black image
     mask_color[mask] = 255  # Set True pixels to green
+    
+    # Save the array as an image
+    # mask = np.expand_dims(mask, axis = -1)
+    # mask = np.concatenate((mask,mask,mask),axis=-1)
 
     return mask

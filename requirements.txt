@@ -5,4 +5,8 @@ matplotlib
 onnxruntime 
 onnx
 tqdm
-csv
+# torch
+# torchvision
+pyYAML
+pandas
+torch==1.10.0+cu102 torchvision==0.11.0+cu102 -f https://download.pytorch.org/whl/torch_stable.html
