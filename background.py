@@ -128,7 +128,7 @@ def detect_background_bbox(folder_name, annotation_file, m, video_folder):
     annotations = convert_bbox_format(annotations, frame_shape[1], frame_shape[0])
     largest_bboxes = []
 
-    for start_frame in range(0, annotations['frame'].max(), frame_interval):
+    for start_frame in tqdm(range(0, annotations['frame'].max(), frame_interval)):
         frame_annotations = annotations[(annotations['frame'] >= start_frame) & (annotations['frame'] < start_frame + frame_interval)]
         if not frame_annotations.empty:
             largest_bbox = find_largest_bbox(frame_annotations, frame_shape)
