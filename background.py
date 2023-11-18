@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 from tqdm import tqdm
-
+from multiprocessing import Pool,Manager
 
 
 def load_annotations(annotation_file, video_folder):
@@ -26,9 +26,9 @@ def convert_bbox_format(annotations, frame_width, frame_height):
 
 ########################
 
-def find_largest_bbox(annotations, frame_shape):
+def find_largest_bbox(largest_bboxes,annotations, frame_shape,start_frame,frame_interval):
     # Initialize a mask for the frame with all zeros (no bounding box)
-    mask = np.zeros(frame_shape, dtype=np.uint8)
+    mask = np.zeros(frame_shape, dtype=np.uint8)    
 
     # Mark the regions covered by the existing bounding boxes in the mask
     for _, row in annotations.iterrows():
@@ -89,9 +89,9 @@ def find_largest_bbox(annotations, frame_shape):
     largest_bbox['y1'],
     largest_bbox['x2'],
     largest_bbox['y2']
-)
-
-    return largest_bbox_output
+)   
+    if largest_bbox_output:
+        largest_bboxes.append(((start_frame, start_frame + frame_interval - 1), largest_bbox_output))
 
 ##########################
 
@@ -126,20 +126,22 @@ def detect_background_bbox(folder_name, annotation_file, m, video_folder):
     frame_shape = get_frame_shape_from_folder(folder_name)
     annotations = load_annotations(annotation_file, video_folder)
     annotations = convert_bbox_format(annotations, frame_shape[1], frame_shape[0])
-    largest_bboxes = []
-
+    p = Pool()
+    m = Manager()
+    largest_bboxes = m.list()
     for start_frame in tqdm(range(0, annotations['frame'].max(), frame_interval)):
         frame_annotations = annotations[(annotations['frame'] >= start_frame) & (annotations['frame'] < start_frame + frame_interval)]
         if not frame_annotations.empty:
-            largest_bbox = find_largest_bbox(frame_annotations, frame_shape)
-            if largest_bbox:
-                largest_bboxes.append(((start_frame, start_frame + frame_interval - 1), largest_bbox))
-                # Load the actual image for each frame within the current interval
+
+            p.apply_async(find_largest_bbox,args= [largest_bboxes,frame_annotations,frame_shape,start_frame,frame_interval])
+            # largest_bbox = find_largest_bbox(frame_annotations, frame_shape)
+            # Load the actual image for each frame within the current interval
                 #for frame_number in range(start_frame, start_frame + frame_interval):
                     #image_path = os.path.join(folder_name, f'img_{frame_number:05d}.jpg')
                     #image = cv2.imread(image_path)  # Load the actual image
                     # if image is not None:
                     #     visualize_bboxes(image, largest_bbox, annotations, frame_number)
-
+    p.close()
+    p.join()
     return largest_bboxes
 
