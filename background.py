@@ -132,9 +132,8 @@ def detect_background_bbox(folder_name, annotation_file, m, video_folder):
     for start_frame in tqdm(range(0, annotations['frame'].max(), frame_interval)):
         frame_annotations = annotations[(annotations['frame'] >= start_frame) & (annotations['frame'] < start_frame + frame_interval)]
         if not frame_annotations.empty:
-
+            # multiprocessing for every m frames
             p.apply_async(find_largest_bbox,args= [largest_bboxes,frame_annotations,frame_shape,start_frame,frame_interval])
-            # largest_bbox = find_largest_bbox(frame_annotations, frame_shape)
             # Load the actual image for each frame within the current interval
                 #for frame_number in range(start_frame, start_frame + frame_interval):
                     #image_path = os.path.join(folder_name, f'img_{frame_number:05d}.jpg')
