@@ -7,5 +7,5 @@ VATAD: Video Augmentation Technique for Action Detection
 
 ### 2. Update `config.yaml` file to change parameters
 
-### 3. Exeecute main file to start video processing
+### 3. Execute main file to start video processing
 `python main.py`
