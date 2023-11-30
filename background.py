@@ -134,12 +134,7 @@ def detect_background_bbox(folder_name, annotation_file, m, video_folder):
         if not frame_annotations.empty:
             # multiprocessing for every m frames
             p.apply_async(find_largest_bbox,args= [largest_bboxes,frame_annotations,frame_shape,start_frame,frame_interval])
-            # Load the actual image for each frame within the current interval
-                #for frame_number in range(start_frame, start_frame + frame_interval):
-                    #image_path = os.path.join(folder_name, f'img_{frame_number:05d}.jpg')
-                    #image = cv2.imread(image_path)  # Load the actual image
-                    # if image is not None:
-                    #     visualize_bboxes(image, largest_bbox, annotations, frame_number)
+        
     p.close()
     p.join()
     return largest_bboxes

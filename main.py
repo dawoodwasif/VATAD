@@ -70,8 +70,7 @@ def process_video(dataset_folder, video_folder, annotation_file, m, action_label
                             superimposed_frame = superimpose_mask(input_frame, mask, target_frame)
                             dest_path = "/home/ubuntu/Furqan/Rumman/VATAD/data/target_data"
                             cv2.imwrite(os.path.join(dest_path,f'img_{int(target_frame_number):05d}.jpg'),superimposed_frame)
-                            #update_annotation_file(annotation_file,video_folder,target_frame_number,action_bbox,class_id,person_id)
-                            print(frame_number, target_frame_number,action_bbox,class_id,person_id)
+                            update_annotation_file(annotation_file,video_folder,target_frame_number,action_bbox,class_id,person_id)
 
                             
 
