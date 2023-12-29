@@ -23,6 +23,11 @@ def convert_bbox_format(annotations, frame_width, frame_height):
     annotations[['y1', 'y2']] *= frame_height
     return annotations
 
+def invert_bbox_format(annotations, frame_width, frame_height):
+    # Convert normalized coordinates to pixel coordinates
+    annotations[['x1', 'x2']] /= frame_width
+    annotations[['y1', 'y2']] /= frame_height
+    return annotations
 
 ########################
 
@@ -117,7 +122,7 @@ def visualize_bboxes(image, bbox, annotations, frame_number):
 
 def get_frame_shape_from_folder(folder_path):
     # Assumes the first image is representative of all frame sizes
-    first_image_path = os.path.join(folder_path, sorted(os.listdir(folder_path))[0])
+    first_image_path = os.path.join(folder_path, sorted(os.listdir(folder_path))[1])
     image = cv2.imread(first_image_path)
     return image.shape[:2]
 
@@ -129,7 +134,7 @@ def detect_background_bbox(folder_name, annotation_file, m, video_folder):
     p = Pool()
     m = Manager()
     largest_bboxes = m.list()
-    for start_frame in tqdm(range(0, annotations['frame'].max(), frame_interval)):
+    for start_frame in range(0, annotations['frame'].max(), frame_interval):
         frame_annotations = annotations[(annotations['frame'] >= start_frame) & (annotations['frame'] < start_frame + frame_interval)]
         if not frame_annotations.empty:
             # multiprocessing for every m frames

@@ -6,8 +6,8 @@ import random
 from tqdm import tqdm
 import numpy as np
 
-from background import detect_background_bbox, load_annotations, convert_bbox_format, get_frame_shape_from_folder
-from utils import superimpose_mask, bbox_within_background, update_annotation_file
+from background import detect_background_bbox, load_annotations, convert_bbox_format, invert_bbox_format, get_frame_shape_from_folder
+from utils import superimpose_mask, bbox_within_background, update_annotation_file, get_unique_video_names, superimpose_bbox
 from mask_extraction import generate_action_mask
 from segment_anything import sam_model_registry
 
@@ -27,7 +27,7 @@ def weighted_random_label(label_weights, k):
     return chosen_labels.tolist()
 
 
-def process_video(dataset_folder, video_folder, annotation_file, m, action_labels, sam_model):
+def process_video(dataset_folder, video_folder, annotation_file, destination_folder, m, action_labels, sam_model):
     video_path = os.path.join(dataset_folder, video_folder)
     frame_shape = get_frame_shape_from_folder(video_path)
 
@@ -40,8 +40,11 @@ def process_video(dataset_folder, video_folder, annotation_file, m, action_label
     annotations = load_annotations(annotation_file, video_folder)
     annotations = convert_bbox_format(annotations, frame_shape[1], frame_shape[0])
     
+    # create new annotation file
+    dest_annotation_file = os.path.join(destination_folder, 'train_annotations.csv')
+    with open(dest_annotation_file, 'a') as file: pass
+    
     print("Relevant annotations loaded")
-    print(background_bboxes)
     
     # Iterate through the background bounding boxes
     for frame_interval, background_bbox in tqdm(background_bboxes):
@@ -60,17 +63,19 @@ def process_video(dataset_folder, video_folder, annotation_file, m, action_label
                         frame_path = os.path.join(video_path, f'img_{int(frame_number):05d}.jpg')
                         input_frame = cv2.imread(frame_path)
 
-                        mask = generate_action_mask(sam_model, frame_path, class_id, action_bbox)
+                        #mask = generate_action_mask(sam_model, frame_path, class_id, action_bbox)
 
                         if target_frames:
                             target_frame_number = target_frames.pop(0)
                             target_frame_path = os.path.join(video_path, f'img_{int(target_frame_number):05d}.jpg')
                             target_frame = cv2.imread(target_frame_path)
                             
-                            superimposed_frame = superimpose_mask(input_frame, mask, target_frame)
-                            dest_path = "/home/ubuntu/Furqan/Rumman/VATAD/data/target_data"
+                            #superimposed_frame = superimpose_mask(input_frame, mask, target_frame)
+                            superimposed_frame = superimpose_bbox(input_frame, action_bbox, target_frame)
+                            dest_path = os.path.join(destination_folder, video_folder)
+                            os.makedirs(dest_path,exist_ok=True)
                             cv2.imwrite(os.path.join(dest_path,f'img_{int(target_frame_number):05d}.jpg'),superimposed_frame)
-                            update_annotation_file(annotation_file,video_folder,target_frame_number,action_bbox,class_id,person_id)
+                            update_annotation_file(dest_annotation_file,video_folder,target_frame_number,action_bbox,class_id,person_id)
 
                             
 
@@ -81,24 +86,32 @@ if __name__ == '__main__':
     device = torch.device(config['model']['device'])
 
     # Initialize SAM model
-    sam = sam_model_registry[config['model']['model_type']](checkpoint=config['paths']['checkpoint_path']).to(device=device)
+    #sam = sam_model_registry[config['model']['model_type']](checkpoint=config['paths']['checkpoint_path']).to(device=device)
+    sam = None
 
     print("SAM model initialized")
     
-    # Update processing with weighted random label selection
-    target_action_label_ids = weighted_random_label(config['labels']['label_weights'], config['labels']['k'])
-    
-    print(f"Action labels sampled: {target_action_label_ids}")
-
     # Arguments from the YAML file
     dataset_path = config['paths']['dataset_path']
-    video_name = config['processing']['video_name']
+    #video_name = config['processing']['video_name']
     annotation_file = config['paths']['annotation_file']
+    destination_path = config['paths']['destination_path']
     m = config['processing']['frame_numbers']
     
+    unique_video_names = get_unique_video_names(annotation_file)
+    print("Total Videos Sampled: " + str(len(unique_video_names)))
     print("All parameters initialized")
+    
+    for video_num, video_name in enumerate(unique_video_names):
+        print("\n#########################")
+        print(f"Video {video_num}: {video_name}")
 
-    process_video(dataset_path, video_name, annotation_file, m, target_action_label_ids, sam)
+        # Update processing with weighted random label selection
+        target_action_label_ids = weighted_random_label(config['labels']['label_weights'], config['labels']['k'])
+    
+        print(f"Action labels sampled: {target_action_label_ids}")
+
+        process_video(dataset_path, video_name, annotation_file, destination_path, m, target_action_label_ids, sam)
 
 
 
